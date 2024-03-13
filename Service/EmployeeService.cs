@@ -9,6 +9,7 @@ using Entities.Exceptions;
 using Entities.Models;
 using Service.Contracts;
 using Shared.DataTransferObjects;
+using Shared.RequestFeatures;
 
 namespace Service
 {
@@ -41,14 +42,18 @@ namespace Service
         }
 
         /////end
-        public async Task<IEnumerable<EmployeeDto>> GetEmployeesAsync(Guid companyId, bool trackChanges)
+        public async Task<(IEnumerable<EmployeeDto> employees, MetaData metaData)>
+GetEmployeesAsync
+(Guid companyId, EmployeeParameters employeeParameters, bool trackChanges)
         {
+            if (!employeeParameters.ValidAgeRange)
+                throw new MaxAgeRangeBadRequestException();
             await CheckIfCompanyExists(companyId, trackChanges);
-
-            var employeesFromDb = _repository.Employee.GetEmployees(companyId,
-trackChanges);
-            var employeesDto = _mapper.Map<IEnumerable<EmployeeDto>>(employeesFromDb);
-            return employeesDto;
+            var employeesWithMetaData = await _repository.Employee
+            .GetEmployeesAsync(companyId, employeeParameters, trackChanges);
+            var employeesDto =
+            _mapper.Map<IEnumerable<EmployeeDto>>(employeesWithMetaData);
+            return (employees: employeesDto, metaData: employeesWithMetaData.MetaData);
         }
 
         public async Task<EmployeeDto> GetEmployeeAsync(Guid companyId, Guid id, bool trackChanges)
@@ -101,10 +106,10 @@ GetEmployeeForPatchAsync
 (Guid companyId, Guid id, bool compTrackChanges, bool empTrackChanges)
         {
             await CheckIfCompanyExists(companyId, compTrackChanges);
-            var employeeDb = await GetEmployeeForCompanyAndCheckIfItExists(companyId, id,
+            var employeeDb = await GetEmployeeForCompanyAndCheckIfItExists(companyId, id, 
 empTrackChanges);
-            var employeeToPatch = _mapper.Map<EmployeeForUpdateDto>(employeeDb);
-            return (employeeToPatch: employeeToPatch, employeeEntity: employeeDb);
+var employeeToPatch = _mapper.Map<EmployeeForUpdateDto>(employeeDb);
+return (employeeToPatch: employeeToPatch, employeeEntity: employeeDb);
         }
         public void SaveChangesForPatch(EmployeeForUpdateDto employeeToPatch, Employee
         employeeEntity)

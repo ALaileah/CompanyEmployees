@@ -32,7 +32,6 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 builder.Services.AddScoped<ValidationFilterAttribute>();
 builder.Services.AddControllers(config => {
-    //config.Filters.Add(new GlobalFilterExample());
     config.RespectBrowserAcceptHeader = true;
     config.ReturnHttpNotAcceptable = true;
     config.InputFormatters.Insert(0, GetJsonPatchInputFormatter());
