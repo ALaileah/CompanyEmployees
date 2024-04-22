@@ -8,20 +8,20 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using CompanyEmployees.Presentation.ModelBinders;
-
-
-
+using Marvin.Cache.Headers;
 
 namespace CompanyEmployees.Presentation.Controllers
 {
+    
     [Route("api/companies")]
     [ApiController]
+    //[ResponseCache(CacheProfileName = "120SecondsDuration")]
     public class CompaniesController : ControllerBase
     {
         private readonly IServiceManager _service;
         public CompaniesController(IServiceManager service) => _service = service;
-            
-        [HttpGet]
+
+        [HttpGet(Name = "GetCompanies")]
         public async Task<IActionResult> GetCompanies()
         {
             var companies = await
@@ -31,6 +31,8 @@ namespace CompanyEmployees.Presentation.Controllers
 
 
         [HttpGet("{id:guid}", Name = "CompanyById")]
+        [HttpCacheExpiration(CacheLocation = CacheLocation.Public, MaxAge = 60)]
+        [HttpCacheValidation(MustRevalidate = false)]
         public async Task<IActionResult> GetCompany(Guid id)
         {
             var company = await _service.CompanyService.GetCompanyAsync(id, trackChanges:
@@ -38,7 +40,7 @@ namespace CompanyEmployees.Presentation.Controllers
             return Ok(company);
         }
 
-        [HttpPost]
+        [HttpPost(Name = "CreateCompany")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> CreateCompany([FromBody] CompanyForCreationDto company)
         {
@@ -89,6 +91,13 @@ company)
             await _service.CompanyService.UpdateCompanyAsync(id, company, trackChanges:
             true);
             return NoContent();
+        }
+
+        [HttpOptions]
+        public IActionResult GetCompaniesOptions()
+        {
+            Response.Headers.Add("Allow", "GET, OPTIONS, POST");
+            return Ok();
         }
 
     }
